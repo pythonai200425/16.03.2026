@@ -28,7 +28,8 @@ Suggested fields for the table:
 
 # Part 2 – Data Access Layer (DAL)
 
-You are given with the SQL code (see below)  
+You are given with the SQL code (see below -- DAL code)  
+
 The DAL should contain functions such as:  
 
 * create the books table
@@ -91,7 +92,7 @@ This is useful during development and testing.
 
 You must create **Pydantic models** that represent the request body of your API  
 
-# Full DAL File to Build
+# DAL code
 
 Below is a complete example of a **DAL file** for the `books` table.
 
