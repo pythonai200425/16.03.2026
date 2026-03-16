@@ -2,7 +2,7 @@
 
 ## Goal
 
-Build a **REST API** using **FastAPI** that works with a **SQLite DAL (Data Access Layer)** for a table called **books**.
+Build a **REST API** using **FastAPI** that works with a **SQLite DAL (Data Access Layer)** for a table called **books**
 
 Your task is to build a **complete REST API for managing books**
 
