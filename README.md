@@ -1,190 +1,166 @@
-# 🛒 Items REST API
-
-> A clean, fast REST API for managing items — built with **FastAPI** · Updated **16.03.2026**
-
+# 🛒 Products REST API
+> A clean, fast REST API for managing products — built with **FastAPI** + **SQLite** · Updated **16.03.2026**
 ---
-
 ## 🚀 Quick Start
-
 ### 1 · Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
-
 ### 2 · Run the server
 ```bash
 uvicorn 01_servers:app --port 8002 --reload
 ```
-
 ### 3 · Open in browser
 | Interface | URL |
 |-----------|-----|
 | 🏠 Home page | http://127.0.0.1:8002/ |
 | 📄 Swagger UI | http://127.0.0.1:8002/docs |
-| 📦 All items | http://127.0.0.1:8002/items |
-
+| 📦 All products | http://127.0.0.1:8002/products |
 > ⚠️ If the page doesn't reload, try changing the port (e.g. `--port 8003`)
-
 ---
-
-## 📦 Item Schema
-
+## 📦 Product Schema
 ```json
 {
-  "id":          1,
-  "name":        "Laptop",
-  "price":       1200.0,
-  "description": "Gaming laptop"
+  "id":         1,
+  "name":       "Laptop",
+  "price":      1200.0,
+  "stock":      10,
+  "category":   "Electronics",
+  "created_at": "2026-03-16 10:00:00"
 }
 ```
-
 | Field | Type | Required |
 |-------|------|----------|
 | `id` | `int` | auto-generated |
 | `name` | `str` | ✅ yes |
-| `price` | `float` | ✅ yes |
-| `description` | `str` | optional |
-
+| `price` | `float` | ✅ yes (≥ 0) |
+| `stock` | `int` | ✅ yes (≥ 0) |
+| `category` | `str` | ✅ yes |
+| `created_at` | `str` | auto-generated |
 ---
-
 ## 🔌 Endpoints
-
 ### `GET /` — Home page
 Returns a decorated HTML landing page with a link to Swagger docs.
-
 ---
-
-### `GET /items` — List all items
+### `GET /products` — List all products
 ```bash
-curl http://127.0.0.1:8002/items
+curl http://127.0.0.1:8002/products
 ```
 **Response `200`**
 ```json
 [
-  { "id": 1, "name": "Laptop",  "price": 1200, "description": "Gaming laptop" },
-  { "id": 2, "name": "Phone",   "price": 800,  "description": "Smartphone" }
+  { "id": 1, "name": "Laptop",  "price": 1200.0, "stock": 10, "category": "Electronics", "created_at": "2026-03-16 10:00:00" },
+  { "id": 2, "name": "Phone",   "price": 800.0,  "stock": 25, "category": "Electronics", "created_at": "2026-03-16 10:01:00" }
 ]
 ```
-
 ---
-
-### `GET /items/{id}` — Get item by ID
+### `GET /products/{id}` — Get product by ID
 ```bash
-curl http://127.0.0.1:8002/items/1
+curl http://127.0.0.1:8002/products/1
 ```
 | Status | Meaning |
 |--------|---------|
-| `200` | Item returned |
-| `404` | Item not found |
-
+| `200` | Product returned |
+| `204` | Product not found |
 ---
-
-### `POST /items` — Create item
+### `POST /products` — Create product
 ```bash
-curl -X POST http://127.0.0.1:8002/items \
+curl -X POST http://127.0.0.1:8002/products \
   -H "Content-Type: application/json" \
-  -d '{"name": "Monitor", "price": 350, "description": "4K display"}'
+  -d '{"name": "Monitor", "price": 350.0, "stock": 5, "category": "Electronics"}'
 ```
 **Response `201`**
 ```json
 {
-  "message": "Item created",
-  "item": { "id": 3, "name": "Monitor", "price": 350, "description": "4K display" },
-  "url": "/items/3"
+  "message": "Product created",
+  "item": { "id": 3, "name": "Monitor", "price": 350.0, "stock": 5, "category": "Electronics" },
+  "url": "/products/3"
 }
 ```
-
 ---
-
-### `PUT /items/{id}` — Full replace (upsert)
-Replaces all fields. If the item doesn't exist, **creates a new one**.
+### `PUT /products/{id}` — Full replace (upsert)
+Replaces all fields. If the product doesn't exist, **creates a new one**.
 ```bash
-curl -X PUT http://127.0.0.1:8002/items/1 \
+curl -X PUT http://127.0.0.1:8002/products/1 \
   -H "Content-Type: application/json" \
-  -d '{"name": "Laptop Pro", "price": 1500, "description": "Updated model"}'
+  -d '{"name": "Laptop Pro", "price": 1500.0, "stock": 8, "category": "Electronics"}'
 ```
 | Status | Meaning |
 |--------|---------|
-| `200` | Item replaced or created |
-
+| `200` | Product replaced |
+| `201` | Product not found — created new |
 ---
-
-### `PATCH /items/{id}` — Partial update
-Updates only the fields you send. Item **must exist** (no upsert).
+### `PATCH /products/{id}` — Partial update
+Updates only the fields you send. Product **must exist** (no upsert).
 ```bash
-curl -X PATCH http://127.0.0.1:8002/items/1 \
+curl -X PATCH http://127.0.0.1:8002/products/1 \
   -H "Content-Type: application/json" \
-  -d '{"price": 999}'
+  -d '{"price": 999.0, "stock": 3}'
 ```
 | Status | Meaning |
 |--------|---------|
-| `200` | Item updated |
-| `404` | Item not found |
-
+| `200` | Product updated |
+| `404` | Product not found |
 ---
-
-### `DELETE /items/{id}` — Delete item
+### `DELETE /products/{id}` — Delete product
 ```bash
-curl -X DELETE http://127.0.0.1:8002/items/1
+curl -X DELETE http://127.0.0.1:8002/products/1
 ```
 **Response `200`**
 ```json
 {
-  "message": "item 1 deleted",
-  "deleted item": { "id": 1, "name": "Laptop", "price": 1200, "description": "Gaming laptop" }
+  "message": "Product 1 deleted"
 }
 ```
 | Status | Meaning |
 |--------|---------|
-| `200` | Item deleted |
-| `404` | Item not found |
-
+| `200` | Product deleted |
+| `404` | Product not found |
 ---
-
+### `DELETE /tables/products` — Drop & recreate table
+> ⚠️ **Destructive** — deletes all products and recreates the empty table.
+```bash
+curl -X DELETE http://127.0.0.1:8002/tables/products
+```
+**Response `200`**
+```json
+{ "message": "Table dropped and recreated" }
+```
+---
 ## 🔁 PUT vs PATCH
-
 | | `PUT` | `PATCH` |
 |-|-------|---------|
 | Sends | All fields | Only changed fields |
-| Item missing | Creates new (upsert) | Returns `404` |
+| Product missing | Creates new (upsert) | Returns `404` |
 | Use when | Full replacement | Small updates |
-
 ---
-
 ## 🛠 Tech Stack
-
 | Tool | Purpose |
 |------|---------|
 | [FastAPI](https://fastapi.tiangolo.com/) | Web framework |
 | [Uvicorn](https://www.uvicorn.org/) | ASGI server |
 | [Pydantic](https://docs.pydantic.dev/) | Data validation |
-
+| [SQLite](https://www.sqlite.org/) | Persistent database |
 ---
-
 ## 📁 Project Structure
-
 ```
 .
 ├── 01_servers.py       # Main API file
+├── dal_sqlite.py       # Database access layer (SQLite)
+├── products.db         # SQLite database (auto-created)
 ├── requirements.txt    # Python dependencies
 └── README.md           # This file
 ```
-
 ---
-
 ## 📋 Requirements
-
 ```
 fastapi
 uvicorn
 pydantic
 ```
-
 Install all at once:
 ```bash
 pip install -r requirements.txt
 ```
-
 ---
-
-*Powered by FastAPI ⚡*
+*Powered by FastAPI ⚡ & SQLite 🗄️*
