@@ -14,7 +14,7 @@ The API receives HTTP requests, validates input using **Pydantic**, and calls SQ
 
 # Part 1 – Books Database
 
-Create a SQLite table called **books**.
+Create a SQLite table called **books**
 
 Suggested fields for the table:
 
