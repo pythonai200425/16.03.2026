@@ -90,18 +90,6 @@ curl -X PUT http://127.0.0.1:8002/products/1 \
 | `200` | Product replaced |
 | `201` | Product not found — created new |
 ---
-### `PATCH /products/{id}` — Partial update
-Updates only the fields you send. Product **must exist** (no upsert).
-```bash
-curl -X PATCH http://127.0.0.1:8002/products/1 \
-  -H "Content-Type: application/json" \
-  -d '{"price": 999.0, "stock": 3}'
-```
-| Status | Meaning |
-|--------|---------|
-| `200` | Product updated |
-| `404` | Product not found |
----
 ### `DELETE /products/{id}` — Delete product
 ```bash
 curl -X DELETE http://127.0.0.1:8002/products/1
