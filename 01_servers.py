@@ -4,6 +4,8 @@ from typing import List, Optional
 from fastapi.responses import HTMLResponse
 from fastapi import Response, status
 
+import dal_sqlite
+
 # pip install uvicorn
 # pip install fastapi
 # uvicorn 01_servers:app --port 8002 --reload
@@ -17,27 +19,19 @@ from fastapi import Response, status
 
 app = FastAPI()
 
-class Item(BaseModel):
+class Product(BaseModel):
     # class variables
     name: str
     price: float
-    description: Optional[str] = None
+    stock: int
+    category: str
 
 
-auto_increment = 2
-items = [
-    # dict == json
-    {"id": 1, "name": "Laptop", "price": 1200, "description": "Gaming laptop"},
-    {"id": 2, "name": "Phone", "price": 800, "description": "Smartphone"},
-]
-
-# ---- GET all ----
 # Go to claude.ai
 '''
 i have a rest api for items with id name price description
 in the main url i need to return a nice decorated page with animation and colors and 3d and link to swagger
 please update this code:
-# ---- GET all ----
 @app.get("/", response_class=HTMLResponse)
 def basic_url():
     return """<h1>Welcome to my site!!</h1><br /><a href="/docs" />Browse to swagger</h2>""" 
@@ -437,36 +431,38 @@ window.addEventListener('resize', () => { resize(); initNodes(); });
 </body>
 </html>'''
 
-
-@app.get("/items")
-def get_items():
-    return items
+# ---- GET all ----
+@app.get("/products")
+def get_prodcuts():
+    return dal_sqlite.get_all_products()
 
 # ---- GET by id ----
-@app.get("/items/{item_id}")
-def get_item_by_id(item_id: int):
-    for item in items:
-        if item["id"] == item_id:
-            return item
-    raise HTTPException(status_code=404, detail=f"Item id={item_id} not found")
+@app.get("/products/{item_id}")
+def get_product_by_id(item_id: int, response: Response):
+    product = dal_sqlite.get_product_by_id(item_id)
+    if not product:
+        response.status_code = status.HTTP_204_NO_CONTENT
+        return {}
+    return product
 
 # ---- POST create ----
-@app.post("/items")
-def create_item(item: Item, response: Response):
-    global auto_increment
-    auto_increment += 1
-    new_item = {
-        "id": auto_increment,
-        "name" : item.name,
-        "price": item.price,
-        "description": item.description
-    }
-    items.append(new_item)
+@app.post("/products")
+def create_product(product: Product, response: Response):
+    row_id = dal_sqlite.insert_product(product.name, product.price, product.stock, product.category)
+    new_product = {**product.__dict__, 'id': row_id}
+    # d1  = {a: 1, b: 2}
+    # d2 = {**d1 a: 1, b: 2, 'id': row_id}
+    print(new_product)
     response.status_code = status.HTTP_201_CREATED
-    return {"message": "Item created", "item": new_item,
-            "url": f"/items/{new_item['id']}"}
+    return {"message": "Product created", "item": new_product,
+            "url": f"/products/{new_product['id']}"}
 
+@app.delete("/tables/products")
+def drop_table_products():
+    dal_sqlite.drop_table_products()
+    return {'message': 'done'}
 
+'''
 # ---- PUT update full ----
 # dict1['danny'] = 90
 # update , if not exist create (replace null)
@@ -534,3 +530,4 @@ def delete_item_by_id(item_id: int):
 
 # d1 = {1: {'name': 'suzi', 'age': 60}}
 # d1[1] = {'name': 'danny'}  # put
+'''
