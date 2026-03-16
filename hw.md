@@ -94,9 +94,7 @@ You must create **Pydantic models** that represent the request body of your API
 
 # DAL code
 
-Below is a complete example of a **DAL file** for the `books` table.
-
-Students can use this as the DAL layer that the REST API will call.
+Below is a complete example of a **DAL file** for the `books` table
 
 ```python
 import sqlite3
