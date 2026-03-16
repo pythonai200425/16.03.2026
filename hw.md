@@ -102,124 +102,102 @@ import sqlite3
 DB_NAME = "books.db"
 
 
-class DALSql:
-    def __init__(self, db_name=DB_NAME):
-        self.db_name = db_name
-        self.create_table_books()
+def get_connection():
+    conn = sqlite3.connect(DB_NAME)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-    def get_connection(self):
-        conn = sqlite3.connect(self.db_name)
-        conn.row_factory = sqlite3.Row
-        return conn
 
-    def row_to_dict(self, row):
-        if row is None:
-            return None
-        return dict(row)
+def row_to_dict(row):
+    if row is None:
+        return None
+    return dict(row)
 
-    def create_table_books(self):
-        query = """
-        CREATE TABLE IF NOT EXISTS books (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            author TEXT NOT NULL,
-            language TEXT,
-            price REAL NOT NULL CHECK(price >= 0),
-            published_year INTEGER,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-        """
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        cursor.execute(query)
-        conn.commit()
-        conn.close()
 
-    def drop_table_books(self):
-        query = "DROP TABLE IF EXISTS books"
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        cursor.execute(query)
-        conn.commit()
-        conn.close()
+def create_table_books():
+    query = """
+    CREATE TABLE IF NOT EXISTS books (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        author TEXT NOT NULL,
+        language TEXT,
+        price REAL NOT NULL CHECK(price >= 0),
+        published_year INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """
+    with get_connection() as conn:
+        conn.execute(query)
 
-    def recreate_table_books(self):
-        self.drop_table_books()
-        self.create_table_books()
 
-    def insert_book(self, title, author, language, price, published_year):
-        query = """
-        INSERT INTO books (title, author, language, price, published_year)
-        VALUES (?, ?, ?, ?, ?)
-        """
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        cursor.execute(query, (title, author, language, price, published_year))
-        conn.commit()
+def drop_table_books():
+    with get_connection() as conn:
+        conn.execute("DROP TABLE IF EXISTS books")
+
+
+def recreate_table_books():
+    drop_table_books()
+    create_table_books()
+
+
+def insert_book(title, author, language, price, published_year):
+    query = """
+    INSERT INTO books (title, author, language, price, published_year)
+    VALUES (?, ?, ?, ?, ?)
+    """
+    with get_connection() as conn:
+        cursor = conn.execute(query, (title, author, language, price, published_year))
         book_id = cursor.lastrowid
-        conn.close()
-        return self.get_book_by_id(book_id)
+    return get_book_by_id(book_id)
 
-    def get_all_books(self):
-        query = """
-        SELECT id, title, author, language, price, published_year, created_at
-        FROM books
-        ORDER BY id
-        """
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        cursor.execute(query)
-        rows = cursor.fetchall()
-        conn.close()
-        return [self.row_to_dict(row) for row in rows]
 
-    def get_book_by_id(self, book_id):
-        query = """
-        SELECT id, title, author, language, price, published_year, created_at
-        FROM books
-        WHERE id = ?
-        """
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        cursor.execute(query, (book_id,))
-        row = cursor.fetchone()
-        conn.close()
-        return self.row_to_dict(row)
+def get_all_books():
+    query = """
+    SELECT id, title, author, language, price, published_year, created_at
+    FROM books
+    ORDER BY id
+    """
+    with get_connection() as conn:
+        rows = conn.execute(query).fetchall()
+    return [row_to_dict(row) for row in rows]
 
-    def update_book(self, book_id, title, author, language, price, published_year):
-        query = """
-        UPDATE books
-        SET title = ?,
-            author = ?,
-            language = ?,
-            price = ?,
-            published_year = ?
-        WHERE id = ?
-        """
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        cursor.execute(query, (title, author, language, price, published_year, book_id))
-        conn.commit()
+
+def get_book_by_id(book_id):
+    query = """
+    SELECT id, title, author, language, price, published_year, created_at
+    FROM books
+    WHERE id = ?
+    """
+    with get_connection() as conn:
+        row = conn.execute(query, (book_id,)).fetchone()
+    return row_to_dict(row)
+
+
+def update_book(book_id, title, author, language, price, published_year):
+    query = """
+    UPDATE books
+    SET title = ?,
+        author = ?,
+        language = ?,
+        price = ?,
+        published_year = ?
+    WHERE id = ?
+    """
+    with get_connection() as conn:
+        cursor = conn.execute(query, (title, author, language, price, published_year, book_id))
         affected_rows = cursor.rowcount
-        conn.close()
+    if affected_rows == 0:
+        return None
+    return get_book_by_id(book_id)
 
-        if affected_rows == 0:
-            return None
 
-        return self.get_book_by_id(book_id)
-
-    def delete_book(self, book_id):
-        existing_book = self.get_book_by_id(book_id)
-        if existing_book is None:
-            return None
-
-        query = "DELETE FROM books WHERE id = ?"
-        conn = self.get_connection()
-        cursor = conn.cursor()
-        cursor.execute(query, (book_id,))
-        conn.commit()
-        conn.close()
-        return existing_book
+def delete_book(book_id):
+    existing_book = get_book_by_id(book_id)
+    if existing_book is None:
+        return None
+    with get_connection() as conn:
+        conn.execute("DELETE FROM books WHERE id = ?", (book_id,))
+    return existing_book
 ```
 
 Good luck 🚀
